@@ -1,0 +1,159 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  fargate-deploy
+
+  Sample SAM Template for fargate-deploy
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+    Tracing: Active
+  Api:
+    TracingEnabled: True
+
+Resources:
+  
+  MyTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn: "arn:aws:iam::489994096722:role/ecsTaskExecutionRole"
+      Cpu: 256
+      Memory: 512
+      NetworkMode: "awsvpc"
+      ContainerDefinitions:
+        - Name: "usama-nginx"
+          Image:  "usamaahmed222/usamapublicrepo:myfirstimagepush"
+          MemoryReservation: 256
+          Memory: 512
+          PortMappings:
+            - ContainerPort: 8080
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: usama-cloudwatch-log-group
+              awslogs-region: us-east-2
+              awslogs-stream-prefix: usama-task-definition
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: usama-cloudwatch-log-group
+
+  ECSCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: UsamaFargateCluster
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+        - CapacityProvider: FARGATE_SPOT
+          Weight: 1
+
+  EcsDeployFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: EcsDeployFunc/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      # Role: !GetAtt MyFunctionRole.Arn
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          CLUSTER_NAME: !Ref ECSCluster
+          TASK_Def: !Ref MyTaskDefinition
+      Policies:
+      - Statement:
+        - Sid: Stmt1512361420000
+          Effect: Allow
+          Action:
+          - ecs:*
+          Resource: '*'
+        - Sid: Stmt1512361420067
+          Effect: Allow
+          Action:
+          - logs:*
+          Resource: '*'
+        - Sid: Stmt1512361420011
+          Effect: Allow
+          Action:
+          - logs:*
+          Resource: '*'
+        - Sid: Stmt1512361420001
+          Effect: Allow
+          Action:
+          - ec2:*
+          Resource: '*'
+        - Sid: Stmt1512361593000
+          Effect: Allow
+          Action:
+          - iam:PassRole
+          Resource: "arn:aws:iam::489994096722:role/ecsTaskExecutionRole"
+        - Sid: Stmt1512361593002
+          Effect: Allow
+          Action:
+          - iam:PassRole
+          Resource: "arn:aws:iam::489994096722:role/ecsInstanceRole"
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hello
+            Method: get
+  # MyFunctionRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     RoleName: Usama-function-role
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: lambda.amazonaws.com
+  #           Action: sts:AssumeRole
+  #     Policies:
+  #       - PolicyName: LambdaECSAccess
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - ecs:*
+  #               Resource: '*'
+  #       - PolicyName: LambdalogsAccess
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Condition:
+  #             - Effect: Allow
+  #               Action:
+  #                 - logs:*
+  #               Resource: '*'
+  #       - PolicyName: LambdaPassAccess
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Condition:
+  #             - Effect: Allow
+  #               Action:
+  #                 - iam:PassRole
+  #               Resource: arn:aws:iam::489994096722:role/ecsTaskExecutionRole
+
+
+Outputs:
+  HelloWorldApi:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  HelloWorldFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt EcsDeployFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt EcsDeployFunction.Arn
