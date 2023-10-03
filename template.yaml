@@ -21,7 +21,7 @@ Resources:
     Properties:
       RequiresCompatibilities:
         - "FARGATE"
-      ExecutionRoleArn: "arn:aws:iam::489994096722:role/ecsTaskExecutionRole"
+      ExecutionRoleArn: "arn:aws:iam::xxxxxxxxxx:role/ecsTaskExecutionRole"
       Cpu: 256
       Memory: 512
       NetworkMode: "awsvpc"
@@ -97,12 +97,12 @@ Resources:
           Effect: Allow
           Action:
           - iam:PassRole
-          Resource: "arn:aws:iam::489994096722:role/ecsTaskExecutionRole"
+          Resource: "arn:aws:iam::xxxxxxxxxx:role/ecsTaskExecutionRole"
         - Sid: Stmt1512361593002
           Effect: Allow
           Action:
           - iam:PassRole
-          Resource: "arn:aws:iam::489994096722:role/ecsInstanceRole"
+          Resource: "arn:aws:iam::xxxxxxxxxx:role/ecsInstanceRole"
       Events:
         HelloWorld:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -144,7 +144,7 @@ Resources:
   #             - Effect: Allow
   #               Action:
   #                 - iam:PassRole
-  #               Resource: arn:aws:iam::489994096722:role/ecsTaskExecutionRole
+  #               Resource: arn:aws:iam::xxxxxxxxxx:role/ecsTaskExecutionRole
 
 
 Outputs:
